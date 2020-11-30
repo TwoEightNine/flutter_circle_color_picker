@@ -22,26 +22,12 @@ class _MyAppState extends State<MyApp> {
         body: SingleChildScrollView(
           child: Column(
             children: <Widget>[
+              SizedBox(height: 32),
               Center(
                 child: CircleColorPicker(
                   initialColor: _currentColor,
                   onChanged: _onColorChanged,
-                ),
-              ),
-              Center(
-                child: CircleColorPicker(
-                  initialColor: _currentColor,
-                  onChanged: _onColorChanged,
-                  colorCodeBuilder: (context, color) {
-                    return Text(
-                      'rgb(${color.red}, ${color.green}, ${color.blue})',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    );
-                  },
+                  strokeWidth: 6,
                 ),
               ),
             ],

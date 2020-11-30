@@ -9,16 +9,10 @@ class CircleColorPicker extends StatefulWidget {
   const CircleColorPicker({
     Key key,
     this.onChanged,
-    this.size = const Size(280, 280),
-    this.strokeWidth = 2,
+    this.size = const Size(320, 320),
+    this.strokeWidth = 6,
     this.thumbSize = 32,
     this.initialColor = const Color.fromARGB(255, 255, 0, 0),
-    this.textStyle = const TextStyle(
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-      color: Colors.black,
-    ),
-    this.colorCodeBuilder,
   }) : super(key: key);
 
   /// Called during a drag when the user is selecting a color.
@@ -49,18 +43,9 @@ class CircleColorPicker extends StatefulWidget {
   /// Default value is Red.
   final Color initialColor;
 
-  /// Text style config
-  ///
-  /// Default value is Black
-  final TextStyle textStyle;
-
-  /// Widget builder that show color code section.
-  /// This functions is called every time color changed.
-  ///
-  /// Default is Text widget that shows rgb strings;
-  final ColorCodeBuilder colorCodeBuilder;
-
   double get initialLightness => HSLColor.fromColor(initialColor).lightness;
+
+  double get initialSaturation => HSLColor.fromColor(initialColor).saturation;
 
   double get initialHue => HSLColor.fromColor(initialColor).hue;
 
@@ -71,13 +56,14 @@ class CircleColorPicker extends StatefulWidget {
 class _CircleColorPickerState extends State<CircleColorPicker>
     with TickerProviderStateMixin {
   AnimationController _lightnessController;
+  AnimationController _saturationController;
   AnimationController _hueController;
 
   Color get _color {
     return HSLColor.fromAHSL(
       1,
       _hueController.value,
-      1,
+      _saturationController.value,
       _lightnessController.value,
     ).toColor();
   }
@@ -108,30 +94,16 @@ class _CircleColorPickerState extends State<CircleColorPicker>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        widget.colorCodeBuilder != null
-                            ? widget.colorCodeBuilder(context, _color)
-                            : Text(
-                                '#${_color.value.toRadixString(16).substring(2)}',
-                                style: widget.textStyle,
-                              ),
-                        const SizedBox(height: 16),
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: _color,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              width: 3,
-                              color: HSLColor.fromColor(_color)
-                                  .withLightness(
-                                    _lightnessController.value * 4 / 5,
-                                  )
-                                  .toColor(),
-                            ),
-                          ),
+                        _SaturationSlider(
+                          initialSaturation: widget.initialSaturation,
+                          width: 140,
+                          thumbSize: 26,
+                          hue: _hueController.value,
+                          onChanged: (saturation) {
+                            _saturationController.value = saturation;
+                          },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 48),
                         _LightnessSlider(
                           initialLightness: widget.initialLightness,
                           width: 140,
@@ -165,6 +137,12 @@ class _CircleColorPickerState extends State<CircleColorPicker>
     _lightnessController = AnimationController(
       vsync: this,
       value: widget.initialLightness,
+      lowerBound: 0,
+      upperBound: 1,
+    )..addListener(_onColorChanged);
+    _saturationController = AnimationController(
+      vsync: this,
+      value: widget.initialSaturation,
       lowerBound: 0,
       upperBound: 1,
     )..addListener(_onColorChanged);
@@ -284,6 +262,122 @@ class _LightnessSliderState extends State<_LightnessSlider>
 
   void _onPanUpdate(DragUpdateDetails details) {
     _lightnessController.value = details.localPosition.dx / widget.width;
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    _scaleController.forward();
+  }
+}
+
+class _SaturationSlider extends StatefulWidget {
+  const _SaturationSlider({
+    Key key,
+    this.hue,
+    this.width,
+    this.onChanged,
+    this.thumbSize,
+    this.initialSaturation,
+  }) : super(key: key);
+
+  final double hue;
+
+  final double width;
+
+  final ValueChanged<double> onChanged;
+
+  final double thumbSize;
+
+  final double initialSaturation;
+
+  @override
+  _SaturationSliderState createState() => _SaturationSliderState();
+}
+
+class _SaturationSliderState extends State<_SaturationSlider>
+    with TickerProviderStateMixin {
+  AnimationController _saturationController;
+  AnimationController _scaleController;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onPanStart: _onPanStart,
+      onPanUpdate: _onPanUpdate,
+      onPanEnd: _onPanEnd,
+      child: SizedBox(
+        width: widget.width,
+        height: widget.thumbSize,
+        child: Stack(
+          alignment: Alignment.centerLeft,
+          children: <Widget>[
+            Container(
+              width: double.infinity,
+              height: 12,
+              margin: EdgeInsets.symmetric(
+                horizontal: widget.thumbSize / 3,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(6)),
+                gradient: LinearGradient(
+                  stops: [0, 0.4, 1],
+                  colors: [
+                    HSLColor.fromAHSL(1, widget.hue, 0, 0.5).toColor(),
+                    HSLColor.fromAHSL(1, widget.hue, 0.5, 0.5).toColor(),
+                    HSLColor.fromAHSL(1, widget.hue, 0.9, 0.5).toColor(),
+                  ],
+                ),
+              ),
+            ),
+            AnimatedBuilder(
+              animation: _saturationController,
+              builder: (context, child) {
+                return Positioned(
+                  left: _saturationController.value *
+                      (widget.width - widget.thumbSize),
+                  child: ScaleTransition(
+                    scale: _scaleController,
+                    child: _Thumb(
+                      size: widget.thumbSize,
+                      color: HSLColor.fromAHSL(
+                        1,
+                        widget.hue,
+                        _saturationController.value,
+                        0.5
+                      ).toColor(),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _saturationController = AnimationController(
+      vsync: this,
+      value: widget.initialSaturation,
+    )..addListener(() => widget.onChanged(_saturationController.value));
+    _scaleController = AnimationController(
+      vsync: this,
+      value: 1,
+      lowerBound: 0.9,
+      upperBound: 1,
+      duration: Duration(milliseconds: 50),
+    );
+  }
+
+  void _onPanStart(DragStartDetails details) {
+    _scaleController.reverse();
+    _saturationController.value = details.localPosition.dx / widget.width;
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    _saturationController.value = details.localPosition.dx / widget.width;
   }
 
   void _onPanEnd(DragEndDetails details) {
