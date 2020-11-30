@@ -9,7 +9,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Color _currentColor = Colors.blue;
+  Color _currentColor = Color(0xff7d7dff);
 
   @override
   Widget build(BuildContext context) {
@@ -19,18 +19,12 @@ class _MyAppState extends State<MyApp> {
           backgroundColor: _currentColor,
           title: const Text('Circle color picker sample'),
         ),
-        body: SingleChildScrollView(
-          child: Column(
-            children: <Widget>[
-              SizedBox(height: 32),
-              Center(
-                child: CircleColorPicker(
-                  initialColor: _currentColor,
-                  onChanged: _onColorChanged,
-                  strokeWidth: 6,
-                ),
-              ),
-            ],
+        body: Center(
+          child: CircleColorPicker(
+            initialColor: _currentColor,
+            circleConfig: _createCircleConfig(),
+            sliderConfig: _createSliderConfig(),
+            onChanged: _onColorChanged,
           ),
         ),
       ),
@@ -40,4 +34,8 @@ class _MyAppState extends State<MyApp> {
   void _onColorChanged(Color color) {
     setState(() => _currentColor = color);
   }
+
+  ColorPickerCircleConfig _createCircleConfig() => ColorPickerCircleConfig();
+
+  ColorPickerSliderConfig _createSliderConfig() => ColorPickerSliderConfig();
 }

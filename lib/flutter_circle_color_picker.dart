@@ -5,13 +5,64 @@ import 'package:flutter/widgets.dart';
 
 typedef ColorCodeBuilder = Widget Function(BuildContext context, Color color);
 
+/// Class for configuring hue circle picker.
+class ColorPickerCircleConfig {
+
+  /// The size of widget.
+  /// Draggable area is thumb widget is included to the size,
+  /// so circle is smaller than the size.
+  ///
+  /// Default value is 320 x 320.
+  final Size size;
+
+  /// The width of circle border.
+  ///
+  /// Default value is 6.
+  final double strokeWidth;
+
+  /// The size of thumb for circle picker.
+  ///
+  /// Default value is 32.
+  final double thumbSize;
+
+  ColorPickerCircleConfig({
+    this.size = const Size(320, 320),
+    this.strokeWidth = 6,
+    this.thumbSize = 32
+  });
+}
+
+class ColorPickerSliderConfig {
+
+  /// The width of slider.
+  ///
+  /// Default value is 160.
+  final double width;
+
+  /// The width of border.
+  ///
+  /// Default value is 6.
+  final double strokeWidth;
+
+  /// The size of thumb for circle picker.
+  ///
+  /// Default value is 26.
+  final double thumbSize;
+
+  ColorPickerSliderConfig({
+    this.width = 160,
+    this.strokeWidth = 6,
+    this.thumbSize = 26
+  });
+
+}
+
 class CircleColorPicker extends StatefulWidget {
   const CircleColorPicker({
     Key key,
     this.onChanged,
-    this.size = const Size(320, 320),
-    this.strokeWidth = 6,
-    this.thumbSize = 32,
+    this.circleConfig,
+    this.sliderConfig,
     this.initialColor = const Color.fromARGB(255, 255, 0, 0),
   }) : super(key: key);
 
@@ -20,22 +71,11 @@ class CircleColorPicker extends StatefulWidget {
   /// This callback called with latest color that user selected.
   final ValueChanged<Color> onChanged;
 
-  /// The size of widget.
-  /// Draggable area is thumb widget is included to the size,
-  /// so circle is smaller than the size.
-  ///
-  /// Default value is 280 x 280.
-  final Size size;
+  /// Config for hue circle.
+  final ColorPickerCircleConfig circleConfig;
 
-  /// The width of circle border.
-  ///
-  /// Default value is 2.
-  final double strokeWidth;
-
-  /// The size of thumb for circle picker.
-  ///
-  /// Default value is 32.
-  final double thumbSize;
+  /// Config for lightness and saturation sliders.
+  final ColorPickerSliderConfig sliderConfig;
 
   /// Initial color for picker.
   /// [onChanged] callback won't be called with initial value.
@@ -71,15 +111,15 @@ class _CircleColorPickerState extends State<CircleColorPicker>
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: widget.size.width,
-      height: widget.size.height,
+      width: widget.circleConfig.size.width,
+      height: widget.circleConfig.size.height,
       child: Stack(
         children: <Widget>[
           _HuePicker(
             initialHue: widget.initialHue,
-            size: widget.size,
-            strokeWidth: widget.strokeWidth,
-            thumbSize: widget.thumbSize,
+            size: widget.circleConfig.size,
+            strokeWidth: widget.circleConfig.strokeWidth,
+            thumbSize: widget.circleConfig.thumbSize,
             onChanged: (hue) {
               _hueController.value = hue * 180 / pi;
             },
@@ -96,8 +136,7 @@ class _CircleColorPickerState extends State<CircleColorPicker>
                       children: <Widget>[
                         _SaturationSlider(
                           initialSaturation: widget.initialSaturation,
-                          width: 140,
-                          thumbSize: 26,
+                          sliderConfig: widget.sliderConfig,
                           hue: _hueController.value,
                           onChanged: (saturation) {
                             _saturationController.value = saturation;
@@ -106,8 +145,7 @@ class _CircleColorPickerState extends State<CircleColorPicker>
                         const SizedBox(height: 48),
                         _LightnessSlider(
                           initialLightness: widget.initialLightness,
-                          width: 140,
-                          thumbSize: 26,
+                          sliderConfig: widget.sliderConfig,
                           hue: _hueController.value,
                           onChanged: (lightness) {
                             _lightnessController.value = lightness;
@@ -157,19 +195,16 @@ class _LightnessSlider extends StatefulWidget {
   const _LightnessSlider({
     Key key,
     this.hue,
-    this.width,
     this.onChanged,
-    this.thumbSize,
+    this.sliderConfig,
     this.initialLightness,
   }) : super(key: key);
 
   final double hue;
 
-  final double width;
-
   final ValueChanged<double> onChanged;
 
-  final double thumbSize;
+  final ColorPickerSliderConfig sliderConfig;
 
   final double initialLightness;
 
@@ -189,8 +224,8 @@ class _LightnessSliderState extends State<_LightnessSlider>
       onPanUpdate: _onPanUpdate,
       onPanEnd: _onPanEnd,
       child: SizedBox(
-        width: widget.width,
-        height: widget.thumbSize,
+        width: widget.sliderConfig.width,
+        height: widget.sliderConfig.thumbSize,
         child: Stack(
           alignment: Alignment.centerLeft,
           children: <Widget>[
@@ -198,7 +233,7 @@ class _LightnessSliderState extends State<_LightnessSlider>
               width: double.infinity,
               height: 12,
               margin: EdgeInsets.symmetric(
-                horizontal: widget.thumbSize / 3,
+                horizontal: widget.sliderConfig.thumbSize / 3,
               ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.all(Radius.circular(6)),
@@ -217,11 +252,11 @@ class _LightnessSliderState extends State<_LightnessSlider>
               builder: (context, child) {
                 return Positioned(
                   left: _lightnessController.value *
-                      (widget.width - widget.thumbSize),
+                      (widget.sliderConfig.width - widget.sliderConfig.thumbSize),
                   child: ScaleTransition(
                     scale: _scaleController,
                     child: _Thumb(
-                      size: widget.thumbSize,
+                      size: widget.sliderConfig.thumbSize,
                       color: HSLColor.fromAHSL(
                         1,
                         widget.hue,
@@ -257,11 +292,11 @@ class _LightnessSliderState extends State<_LightnessSlider>
 
   void _onPanStart(DragStartDetails details) {
     _scaleController.reverse();
-    _lightnessController.value = details.localPosition.dx / widget.width;
+    _lightnessController.value = details.localPosition.dx / widget.sliderConfig.width;
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _lightnessController.value = details.localPosition.dx / widget.width;
+    _lightnessController.value = details.localPosition.dx / widget.sliderConfig.width;
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -273,19 +308,16 @@ class _SaturationSlider extends StatefulWidget {
   const _SaturationSlider({
     Key key,
     this.hue,
-    this.width,
     this.onChanged,
-    this.thumbSize,
+    this.sliderConfig,
     this.initialSaturation,
   }) : super(key: key);
 
   final double hue;
 
-  final double width;
-
   final ValueChanged<double> onChanged;
 
-  final double thumbSize;
+  final ColorPickerSliderConfig sliderConfig;
 
   final double initialSaturation;
 
@@ -305,8 +337,8 @@ class _SaturationSliderState extends State<_SaturationSlider>
       onPanUpdate: _onPanUpdate,
       onPanEnd: _onPanEnd,
       child: SizedBox(
-        width: widget.width,
-        height: widget.thumbSize,
+        width: widget.sliderConfig.width,
+        height: widget.sliderConfig.thumbSize,
         child: Stack(
           alignment: Alignment.centerLeft,
           children: <Widget>[
@@ -314,7 +346,7 @@ class _SaturationSliderState extends State<_SaturationSlider>
               width: double.infinity,
               height: 12,
               margin: EdgeInsets.symmetric(
-                horizontal: widget.thumbSize / 3,
+                horizontal: widget.sliderConfig.thumbSize / 3,
               ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.all(Radius.circular(6)),
@@ -333,11 +365,11 @@ class _SaturationSliderState extends State<_SaturationSlider>
               builder: (context, child) {
                 return Positioned(
                   left: _saturationController.value *
-                      (widget.width - widget.thumbSize),
+                      (widget.sliderConfig.width - widget.sliderConfig.thumbSize),
                   child: ScaleTransition(
                     scale: _scaleController,
                     child: _Thumb(
-                      size: widget.thumbSize,
+                      size: widget.sliderConfig.thumbSize,
                       color: HSLColor.fromAHSL(
                         1,
                         widget.hue,
@@ -373,11 +405,11 @@ class _SaturationSliderState extends State<_SaturationSlider>
 
   void _onPanStart(DragStartDetails details) {
     _scaleController.reverse();
-    _saturationController.value = details.localPosition.dx / widget.width;
+    _saturationController.value = details.localPosition.dx / widget.sliderConfig.width;
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _saturationController.value = details.localPosition.dx / widget.width;
+    _saturationController.value = details.localPosition.dx / widget.sliderConfig.width;
   }
 
   void _onPanEnd(DragEndDetails details) {
