@@ -1,6 +1,8 @@
 # Flutter HSV-based circle color picker
 A HSV-based circle color picker for flutter based on [itome's color picker](https://github.com/itome/flutter_circle_color_picker).
 
+![Sample](sample.png)
+
 ## Usage
 
 ```dart
