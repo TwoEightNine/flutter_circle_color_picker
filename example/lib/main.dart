@@ -19,14 +19,7 @@ class _MyAppState extends State<MyApp> {
           backgroundColor: _currentColor,
           title: const Text('Circle color picker sample'),
         ),
-        body: Center(
-          child: CircleColorPicker(
-            initialColor: _currentColor,
-            circleConfig: _createCircleConfig(),
-            sliderConfig: _createSliderConfig(),
-            onChanged: _onColorChanged,
-          ),
-        ),
+        body: Center(child: _createColorPicker()),
       ),
     );
   }
@@ -35,7 +28,26 @@ class _MyAppState extends State<MyApp> {
     setState(() => _currentColor = color);
   }
 
-  ColorPickerCircleConfig _createCircleConfig() => ColorPickerCircleConfig();
+  CircleColorPicker _createColorPicker() =>
+      CircleColorPicker(
+        initialColor: _currentColor,
+        circleConfig: _createCircleConfig(),
+        sliderConfig: _createSliderConfig(),
+        onChanged: _onColorChanged,
+      );
 
-  ColorPickerSliderConfig _createSliderConfig() => ColorPickerSliderConfig();
+  ColorPickerCircleConfig _createCircleConfig() =>
+      ColorPickerCircleConfig(
+          size: Size(320, 320),
+          strokeWidth: 6,
+          thumbSize: 32,
+          spaceHeight: 48
+      );
+
+  ColorPickerSliderConfig _createSliderConfig() =>
+      ColorPickerSliderConfig(
+          width: 180,
+          strokeWidth: 6,
+          thumbSize: 26
+      );
 }

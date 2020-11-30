@@ -1,47 +1,50 @@
-# flutter_circle_color_picker
-[![pub package](https://img.shields.io/pub/v/flutter_circle_color_picker.svg)](https://pub.dartlang.org/packages/flutter_circle_color_picker)
-
-A beautiful circle color picker for flutter.
-
-|Light theme|Dark Theme|
-| --- | --- |
-| ![sample light theme](https://user-images.githubusercontent.com/24409457/69745423-82bd7b80-1185-11ea-9ea5-70ab5596d872.gif) | ![sample dark theme](https://user-images.githubusercontent.com/24409457/69745500-a84a8500-1185-11ea-9e90-28492227e779.gif) |
-
+# Flutter HSV-based circle color picker
+A HSV-based circle color picker for flutter based on [itome's color picker](https://github.com/itome/flutter_circle_color_picker).
 
 ## Usage
 
 ```dart
-...
-        body: Center(
-          child: CircleColorPicker(
-            initialColor: Colors.blue,
-            onChanged: (color) => print(color),
-            size: const Size(240, 240),
-            strokeWidth: 4,
-            thumbSize: 36,
-          ),
-        ),
-...
+
+    CircleColorPicker _createColorPicker() =>
+        CircleColorPicker(
+          initialColor: _currentColor,
+          circleConfig: _createCircleConfig(),
+          sliderConfig: _createSliderConfig(),
+          onChanged: _onColorChanged,
+        );
+  
+    ColorPickerCircleConfig _createCircleConfig() =>
+        ColorPickerCircleConfig(
+            size: Size(320, 320),
+            strokeWidth: 6,
+            thumbSize: 32,
+            spaceHeight: 48
+        );
+  
+    ColorPickerSliderConfig _createSliderConfig() =>
+        ColorPickerSliderConfig(
+            width: 180,
+            strokeWidth: 6,
+            thumbSize: 26
+        );
+
 ```
 
 ## API
 
-```dart
-  /// Called during a drag when the user is selecting a color.
-  ///
-  /// This callback called with latest color that user selected.
-  final ValueChanged<Color> onChanged;
+#### ColorPickerCircleConfig
 
+```dart
   /// The size of widget.
   /// Draggable area is thumb widget is included to the size,
   /// so circle is smaller than the size.
   ///
-  /// Default value is 280 x 280.
+  /// Default value is 320 x 320.
   final Size size;
 
   /// The width of circle border.
   ///
-  /// Default value is 2.
+  /// Default value is 6.
   final double strokeWidth;
 
   /// The size of thumb for circle picker.
@@ -49,20 +52,47 @@ A beautiful circle color picker for flutter.
   /// Default value is 32.
   final double thumbSize;
 
-  /// Initial color for picker.
-  /// [onChanged] callback won't be called with initial value.
+  /// The height of space between sliders.
   ///
-  /// Default value is Red.
-  final Color initialColor;
+  /// Default value is 48.
+  final double spaceHeight;
+```
 
-  /// Text style config
+#### ColorPickerSliderConfig
+```dart
+  /// The width of slider.
   ///
-  /// Default value is Black
-  final TextStyle textStyle;
+  /// Default value is 180.
+  final double width;
 
-  /// Widget builder that show color code section.
-  /// This functions is called every time color changed.
+  /// The width of border.
   ///
-  /// Default is Text widget that shows rgb strings;
-  final ColorCodeBuilder colorCodeBuilder;
+  /// Default value is 6.
+  final double strokeWidth;
+
+  /// The size of thumb for circle picker.
+  ///
+  /// Default value is 26.
+  final double thumbSize;
+```
+
+#### CircleColorPicker
+
+```dart
+    /// Called during a drag when the user is selecting a color.
+    ///
+    /// This callback called with latest color that user selected.
+    final ValueChanged<Color> onChanged;
+  
+    /// Config for hue circle.
+    final ColorPickerCircleConfig circleConfig;
+  
+    /// Config for value and saturation sliders.
+    final ColorPickerSliderConfig sliderConfig;
+  
+    /// Initial color for picker.
+    /// [onChanged] callback won't be called with initial value.
+    ///
+    /// Default value is Red.
+    final Color initialColor;
 ```
