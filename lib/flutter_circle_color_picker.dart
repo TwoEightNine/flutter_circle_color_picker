@@ -25,10 +25,16 @@ class ColorPickerCircleConfig {
   /// Default value is 32.
   final double thumbSize;
 
+  /// The height of space between sliders.
+  ///
+  /// Default value is 48.
+  final double spaceHeight;
+
   ColorPickerCircleConfig({
     this.size = const Size(320, 320),
     this.strokeWidth = 6,
-    this.thumbSize = 32
+    this.thumbSize = 32,
+    this.spaceHeight = 48
   });
 }
 
@@ -36,7 +42,7 @@ class ColorPickerSliderConfig {
 
   /// The width of slider.
   ///
-  /// Default value is 160.
+  /// Default value is 180.
   final double width;
 
   /// The width of border.
@@ -50,7 +56,7 @@ class ColorPickerSliderConfig {
   final double thumbSize;
 
   ColorPickerSliderConfig({
-    this.width = 160,
+    this.width = 180,
     this.strokeWidth = 6,
     this.thumbSize = 26
   });
@@ -74,7 +80,7 @@ class CircleColorPicker extends StatefulWidget {
   /// Config for hue circle.
   final ColorPickerCircleConfig circleConfig;
 
-  /// Config for lightness and saturation sliders.
+  /// Config for value and saturation sliders.
   final ColorPickerSliderConfig sliderConfig;
 
   /// Initial color for picker.
@@ -83,11 +89,11 @@ class CircleColorPicker extends StatefulWidget {
   /// Default value is Red.
   final Color initialColor;
 
-  double get initialLightness => HSLColor.fromColor(initialColor).lightness;
+  double get initialHue => HSVColor.fromColor(initialColor).hue;
 
-  double get initialSaturation => HSLColor.fromColor(initialColor).saturation;
+  double get initialSaturation => HSVColor.fromColor(initialColor).saturation;
 
-  double get initialHue => HSLColor.fromColor(initialColor).hue;
+  double get initialValue => HSVColor.fromColor(initialColor).value;
 
   @override
   _CircleColorPickerState createState() => _CircleColorPickerState();
@@ -95,16 +101,16 @@ class CircleColorPicker extends StatefulWidget {
 
 class _CircleColorPickerState extends State<CircleColorPicker>
     with TickerProviderStateMixin {
-  AnimationController _lightnessController;
+  AnimationController _valueController;
   AnimationController _saturationController;
   AnimationController _hueController;
 
   Color get _color {
-    return HSLColor.fromAHSL(
+    return HSVColor.fromAHSV(
       1,
       _hueController.value,
       _saturationController.value,
-      _lightnessController.value,
+      _valueController.value,
     ).toColor();
   }
 
@@ -128,7 +134,7 @@ class _CircleColorPickerState extends State<CircleColorPicker>
             animation: _hueController,
             builder: (context, child) {
               return AnimatedBuilder(
-                animation: _lightnessController,
+                animation: _valueController,
                 builder: (context, _) {
                   return Center(
                     child: Column(
@@ -142,13 +148,13 @@ class _CircleColorPickerState extends State<CircleColorPicker>
                             _saturationController.value = saturation;
                           },
                         ),
-                        const SizedBox(height: 48),
-                        _LightnessSlider(
-                          initialLightness: widget.initialLightness,
+                        SizedBox(height: widget.circleConfig.spaceHeight),
+                        _ValueSlider(
+                          initialValue: widget.initialValue,
                           sliderConfig: widget.sliderConfig,
                           hue: _hueController.value,
-                          onChanged: (lightness) {
-                            _lightnessController.value = lightness;
+                          onChanged: (value) {
+                            _valueController.value = value;
                           },
                         ),
                       ],
@@ -172,9 +178,9 @@ class _CircleColorPickerState extends State<CircleColorPicker>
       lowerBound: 0,
       upperBound: 360,
     )..addListener(_onColorChanged);
-    _lightnessController = AnimationController(
+    _valueController = AnimationController(
       vsync: this,
-      value: widget.initialLightness,
+      value: widget.initialValue,
       lowerBound: 0,
       upperBound: 1,
     )..addListener(_onColorChanged);
@@ -191,13 +197,13 @@ class _CircleColorPickerState extends State<CircleColorPicker>
   }
 }
 
-class _LightnessSlider extends StatefulWidget {
-  const _LightnessSlider({
+class _ValueSlider extends StatefulWidget {
+  const _ValueSlider({
     Key key,
     this.hue,
     this.onChanged,
     this.sliderConfig,
-    this.initialLightness,
+    this.initialValue,
   }) : super(key: key);
 
   final double hue;
@@ -206,15 +212,15 @@ class _LightnessSlider extends StatefulWidget {
 
   final ColorPickerSliderConfig sliderConfig;
 
-  final double initialLightness;
+  final double initialValue;
 
   @override
-  _LightnessSliderState createState() => _LightnessSliderState();
+  _ValueSliderState createState() => _ValueSliderState();
 }
 
-class _LightnessSliderState extends State<_LightnessSlider>
+class _ValueSliderState extends State<_ValueSlider>
     with TickerProviderStateMixin {
-  AnimationController _lightnessController;
+  AnimationController _valueController;
   AnimationController _scaleController;
 
   @override
@@ -240,28 +246,28 @@ class _LightnessSliderState extends State<_LightnessSlider>
                 gradient: LinearGradient(
                   stops: [0, 0.4, 1],
                   colors: [
-                    HSLColor.fromAHSL(1, widget.hue, 1, 0).toColor(),
-                    HSLColor.fromAHSL(1, widget.hue, 1, 0.5).toColor(),
-                    HSLColor.fromAHSL(1, widget.hue, 1, 0.9).toColor(),
+                    HSVColor.fromAHSV(1, widget.hue, 1, 0).toColor(),
+                    HSVColor.fromAHSV(1, widget.hue, 1, 0.5).toColor(),
+                    HSVColor.fromAHSV(1, widget.hue, 1, 0.9).toColor(),
                   ],
                 ),
               ),
             ),
             AnimatedBuilder(
-              animation: _lightnessController,
+              animation: _valueController,
               builder: (context, child) {
                 return Positioned(
-                  left: _lightnessController.value *
+                  left: _valueController.value *
                       (widget.sliderConfig.width - widget.sliderConfig.thumbSize),
                   child: ScaleTransition(
                     scale: _scaleController,
                     child: _Thumb(
                       size: widget.sliderConfig.thumbSize,
-                      color: HSLColor.fromAHSL(
+                      color: HSVColor.fromAHSV(
                         1,
                         widget.hue,
                         1,
-                        _lightnessController.value,
+                        _valueController.value,
                       ).toColor(),
                     ),
                   ),
@@ -277,10 +283,10 @@ class _LightnessSliderState extends State<_LightnessSlider>
   @override
   void initState() {
     super.initState();
-    _lightnessController = AnimationController(
+    _valueController = AnimationController(
       vsync: this,
-      value: widget.initialLightness,
-    )..addListener(() => widget.onChanged(_lightnessController.value));
+      value: widget.initialValue,
+    )..addListener(() => widget.onChanged(_valueController.value));
     _scaleController = AnimationController(
       vsync: this,
       value: 1,
@@ -292,11 +298,11 @@ class _LightnessSliderState extends State<_LightnessSlider>
 
   void _onPanStart(DragStartDetails details) {
     _scaleController.reverse();
-    _lightnessController.value = details.localPosition.dx / widget.sliderConfig.width;
+    _valueController.value = details.localPosition.dx / widget.sliderConfig.width;
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _lightnessController.value = details.localPosition.dx / widget.sliderConfig.width;
+    _valueController.value = details.localPosition.dx / widget.sliderConfig.width;
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -353,9 +359,9 @@ class _SaturationSliderState extends State<_SaturationSlider>
                 gradient: LinearGradient(
                   stops: [0, 0.4, 1],
                   colors: [
-                    HSLColor.fromAHSL(1, widget.hue, 0, 0.5).toColor(),
-                    HSLColor.fromAHSL(1, widget.hue, 0.5, 0.5).toColor(),
-                    HSLColor.fromAHSL(1, widget.hue, 0.9, 0.5).toColor(),
+                    HSVColor.fromAHSV(1, widget.hue, 0, 1).toColor(),
+                    HSVColor.fromAHSV(1, widget.hue, 0.5, 1).toColor(),
+                    HSVColor.fromAHSV(1, widget.hue, 0.9, 1).toColor(),
                   ],
                 ),
               ),
@@ -370,11 +376,11 @@ class _SaturationSliderState extends State<_SaturationSlider>
                     scale: _scaleController,
                     child: _Thumb(
                       size: widget.sliderConfig.thumbSize,
-                      color: HSLColor.fromAHSL(
+                      color: HSVColor.fromAHSV(
                         1,
                         widget.hue,
                         _saturationController.value,
-                        0.5
+                        1
                       ).toColor(),
                     ),
                   ),
@@ -484,7 +490,7 @@ class _HuePickerState extends State<_HuePicker> with TickerProviderStateMixin {
                     scale: _scaleController,
                     child: _Thumb(
                       size: widget.thumbSize,
-                      color: HSLColor.fromAHSL(1, hue, 1, 0.5).toColor(),
+                      color: HSVColor.fromAHSV(1, hue, 1, 1).toColor(),
                     ),
                   );
                 },
